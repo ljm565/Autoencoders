@@ -1,0 +1,43 @@
+{   
+    "model_type": "AE",
+    "denoising": 0,
+    "noise_mean": 0,
+    "noise_std": 0.2,
+    
+    "MNIST_train": 0,
+    "MNIST_valset_proportion": 0.2,
+
+
+    "train_data_path":"/Users/ljm/Desktop/train/",
+    "val_data_path":"/Users/ljm/Desktop/val/",
+    "test_data_path":"/Users/ljm/Desktop/test/",
+    "custom_data_proportion": [0.7, 0.3],
+    "two_folders": ["val", "test"],
+
+
+    "base_path": "./AE/",
+    "model_name": "AE_MNIST_10epochs.pt",
+    "data_name": "data1",
+    "loss_data_name": "AE_MNIST_10epochs.pkl",
+
+
+    "color_channel": 3,
+
+
+    "height": 28,
+    "width": 28,
+    "convert2grayscale": 0,
+
+
+    "batch_size": 128,
+    "epochs": 1,
+    "lr": 0.001,
+    "hidden_dim": 256,
+    "latent_dim": 32,
+    "dropout": 0.3,
+
+    "result_num": 10,
+    "visualization": 1,
+    "result_img_name": "result.png",
+    "visualization_img_name": "visualization.png"
+}
