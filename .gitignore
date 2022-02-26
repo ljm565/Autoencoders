@@ -3,3 +3,4 @@ __pycache__/
 model/
 loss/
 data/
+MNIST/
