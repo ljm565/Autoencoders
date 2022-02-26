@@ -1,5 +1,5 @@
 {   
-    "model_type": "CAE",
+    "model_type": "AE",
     "denoising": 0,
     "noise_mean": 0,
     "noise_std": 0.2,
