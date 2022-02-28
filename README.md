@@ -26,15 +26,24 @@ Autoencoder (오토인코더)는 원래의 데이터를 압축하고 복구하�
 * ### 학습 방법
     학습을 시작하기 위한 argument는 4가지가 있습니다.<br>
     * [-d --device] {cpu, gpu}, **필수**: 학습을 cpu, gpu로 할건지 정하는 인자입니다.
-    * [-m --mode] {train, test}, **필수**: 학습을 시작하려면 train, 학습된 모델을 가지고 있어서 가시화 혹은 결과를 보고싶은 경우에는 test로 설정해야합니다. test를 사용할 경우, -n 이 **필수**입니다.
+    * [-m --mode] {train, test}, **필수**: 학습을 시작하려면 train, 학습된 모델을 가지고 있어서 가시화 혹은 결과를 보고싶은 경우에는 test로 설정해야합니다. test를 사용할 경우, [-n, --name] 인자가 **필수**입니다.
     * [-c --cont] {1}, **선택**: 학습이 중간에 종료가 된 경우 다시 저장된 모델의 체크포인트 부분부터 학습을 시작할 수 있습니다. 이 인자를 사용할 경우 -m train 이어야 합니다. 
     * [-n --name] {name}, **선택**: 이 인자는 -c 1 혹은 -m test 경우 사용합니다.
     중간에 다시 불러서 학습을 할 경우 모델의 이름을 입력하고, test를 할 경우에도 test 할 모델의 이름을 입력해주어야합니다(최초 학습시 config.json에서 정한 모델의 이름의 폴더가 형성되고 그 폴더 내부에 모델 및 모델 파라미터가 json 파일로 형성 됩니다).<br><br>
 
     예시<br>
-    * 최초 학습 시: python3 main.py -d cpu -m train
-    * 중간에 중단 된 모델 이어서 학습 시: python3 main.py -d gpu -m train -c 1 -n my_autoencoder
-    * 학습 된 모델 결과 볼 때: python3 main.py -d cpu -m test -n my_autoencoder
+    * 최초 학습 시
+        ```
+        python3 main.py -d cpu -m train
+        ```
+    * 중간에 중단 된 모델 이어서 학습 시
+        ```
+        python3 main.py -d gpu -m train -c 1 -n my_autoencoder
+        ```
+    * 학습 된 모델 결과 볼 때
+        ```
+        python3 main.py -d cpu -m test -n my_autoencoder
+        ```
     <br><br><br>
 
 * ### 모델 학습 조건 설정 (config.json)
