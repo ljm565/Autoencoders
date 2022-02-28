@@ -31,7 +31,7 @@ Autoencoder (오토인코더)는 원래의 데이터를 압축하고 복구하�
     * [-n --name] {name}, **선택**: 이 인자는 -c 1 혹은 -m test 경우 사용합니다.
     중간에 다시 불러서 학습을 할 경우 모델의 이름을 입력하고, test를 할 경우에도 test 할 모델의 이름을 입력해주어야합니다(최초 학습시 config.json에서 정한 모델의 이름의 폴더가 형성되고 그 폴더 내부에 모델 및 모델 파라미터가 json 파일로 형성 됩니다).<br><br>
 
-    예시<br>
+    터미널 명령어 예시<br>
     * 최초 학습 시
         ```
         python3 main.py -d cpu -m train
@@ -63,9 +63,9 @@ Autoencoder (오토인코더)는 원래의 데이터를 압축하고 복구하�
         <br><br>
 
     * base_path: 학습 관련 파일이 저장될 위치
-    * model_name: 학습 모델이 저장될 파일 이름 설정. 모델은 base_path/model/model_name/ 내부에 model_name/model_name.pt 로 저장.
-    * data_name: 학습 데이터 이름 설정. base_path/data/ 내부에 train.pkl, val.pkl, test.pkl 파일로 저장. 전처리 등 시간 절약을 위해 이후 같은 data_name을 사용할 시 저장된 데이터를 불러서 사용.
-    * loss_data_name: 학습 시 발생한 loss data를 저장하기 위한 이름 설정. base_path/loss/loss_data_name.pkl 파일로 저장. 내부에 중단된 학습을 다시 시작할 때, 학습 과정에 발생한 loss 데이터를 그릴 때 등 필요한 데이터를 dictionary 형태로 저장.
+    * model_name: 학습 모델이 저장될 파일 이름 설정. 모델은 base_path/model/{model_name}/{model_name}.pt 로 저장.
+    * data_name: 학습 데이터 이름 설정. base_path/{data_name}/ 내부에 train.pkl, val.pkl, test.pkl 파일로 저장. 전처리 등 시간 절약을 위해 이후 같은 data_name을 사용할 시 저장된 데이터를 불러서 사용(사용자 지정 데이터 사용시 data 폴더 생성). 
+    * loss_data_name: 학습 시 발생한 loss data를 저장하기 위한 이름 설정. base_path/loss/{loss_data_name}.pkl 파일로 저장. 내부에 중단된 학습을 다시 시작할 때, 학습 과정에 발생한 loss 데이터를 그릴 때 등 필요한 데이터를 dictionary 형태로 저장.
     * color_channel: 학습에 사용되는 데이터가 흑백이면 1, 칼라면 3으로 설정(MNIST 사용 시 1로 설정).
     * hieght, width: 데이터의 전 처리 할 크기를 지정(MNIST의 raw data 크기는 28 * 28)
     * convert2grayscale: {0, 1} 중 선택, color_channel = 3 일때만 작동. 칼라 데이터를 흑백 데이터로 변경하고싶을 때 1, 칼라로 유지하고싶을 때 0으로 설정.
@@ -79,9 +79,9 @@ Autoencoder (오토인코더)는 원래의 데이터를 압축하고 복구하�
 
     * ### 모델 학습 결과 가시화 관련
         * result_num: 확인하고자 하는 autoencoder의 복구 결과 이미지 수. 랜덤으로 test set 중 설정한 result_num 수 만큼 추출하여 결과 이미지를 보여줌.
-        * rusult_img_name: 위의 결과를 저장할 이미지 파일 이름.
+        * rusult_img_name: 위의 결과를 저장할 이미지 파일 이름. result/{result_img_name} 으로 저장.
         * visualization: {0, 1} 중 선택. t-SNE를 통한 test set의 latent variable을 가시화 하려면 1, 아니면 0으로 설정(현재 label 데이터가 있는 MNIST 데이터에 대해서만 가시화, 사용자 지정 데이터의 label이 있다면 train.py의 test 함수 코드를 수정하여 사용, 즉 MNIST_train = 1 이어야 함).
-        * visualization_img_name: 위에서 t-SNE를 가시화 한다면, 그 결과를 저장할 이미지 파일 이름.
+        * visualization_img_name: 위에서 t-SNE를 가시화 한다면, 그 결과를 저장할 이미지 파일 이름. result/{visualization_img_name} 으로 저장.
         <br><br><br>
 
 

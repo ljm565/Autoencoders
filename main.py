@@ -14,9 +14,15 @@ def main(config_path:Config, args:ArgumentParser):
     print('Using {}'.format(device))
 
     if (args.cont and args.mode == 'train') or args.mode == 'test':
-        config = Config(config_path)
-        config = Config(config.base_path + '/model/' + args.name + '/' + args.name + '.json')
-        base_path = config.base_path
+        try:
+            config = Config(config_path)
+            config = Config(config.base_path + '/model/' + args.name + '/' + args.name + '.json')
+            base_path = config.base_path
+        except:
+            print('*'*36)
+            print('There is no [-n, --name] argument')
+            print('*'*36)
+            raise AssertionError
     else:
         config = Config(config_path)
         base_path = config.base_path
