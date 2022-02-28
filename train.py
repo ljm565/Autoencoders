@@ -102,6 +102,7 @@ class Trainer:
                         self.test_len = len(data2) - self.val_len
                         self.valset, self.testset = random_split(data2, [self.val_len, self.test_len], generator=torch.Generator().manual_seed(999))
                     else:
+                        print("two folders must be ['train', 'val] or ['val', 'test']")
                         raise AssertionError
 
                 elif len(self.custom_data_proportion) == 1:
