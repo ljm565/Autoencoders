@@ -210,7 +210,7 @@ class Trainer:
 
     def test(self, result_num, visualization):
         if result_num > len(self.dataloaders['test'].dataset):
-            print('The number of results that you want to see is larger than total test set')
+            print('The number of results that you want to see are larger than total test set')
             raise AssertionError
         
         

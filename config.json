@@ -16,9 +16,9 @@
 
 
     "base_path": "./",
-    "model_name": "AE_MNIST_10epochs.pt",
+    "model_name": "AE_MNIST_10epochs",
     "data_name": "data1",
-    "loss_data_name": "AE_MNIST_10epochs.pkl",
+    "loss_data_name": "AE_MNIST_10epochs",
 
 
     "color_channel": 1,
@@ -30,14 +30,14 @@
 
 
     "batch_size": 128,
-    "epochs": 1,
+    "epochs": 10,
     "lr": 0.001,
     "hidden_dim": 256,
     "latent_dim": 32,
     "dropout": 0.3,
 
     "result_num": 10,
-    "visualization": 1,
     "result_img_name": "result.png",
+    "visualization": 1,
     "visualization_img_name": "visualization.png"
 }

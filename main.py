@@ -26,13 +26,12 @@ def main(config_path:Config, args:ArgumentParser):
         os.makedirs(base_path+'loss', exist_ok=True)
 
         # redefine config
-        config.loss_data_path = base_path+'loss/'+config.loss_data_name
+        config.loss_data_path = base_path + 'loss/' + config.loss_data_name + '.pkl'
 
         # make model related files and folder
-        only_model_name = config.model_name[:config.model_name.rfind('.')]
-        model_folder = base_path + 'model/' + only_model_name
-        config.model_path = model_folder + '/' + config.model_name
-        model_json_path = model_folder + '/' + only_model_name + '.json'
+        model_folder = base_path + 'model/' + config.model_name
+        config.model_path = model_folder + '/' + config.model_name + '.pt'
+        model_json_path = model_folder + '/' + config.model_name + '.json'
         os.makedirs(model_folder, exist_ok=True)
           
         with open(model_json_path, 'w') as f:
