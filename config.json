@@ -2,7 +2,7 @@
     "model_type": "AE",
     "denoising": 0,
     "noise_mean": 0,
-    "noise_std": 0.2,
+    "noise_std": 0.1,
     
     "MNIST_train": 1,
     "MNIST_valset_proportion": 0.2,
