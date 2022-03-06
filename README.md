@@ -106,7 +106,7 @@ Autoencoder의 설명은 [Autoencoder (오토인코더)](https://ljm565.github.i
 
     * ### 모델 학습 결과 가시화 관련
         * result_num: 확인하고자 하는 autoencoder의 복구 결과 이미지 수. 랜덤으로 test set 중 설정한 result_num 수 만큼 추출하여 결과 이미지를 보여줌.
-        * rusult_img_name: 위의 결과를 저장할 이미지 파일 이름. result/{result_img_name} 으로 저장.
+        * result_img_name: 위의 결과를 저장할 이미지 파일 이름. result/{result_img_name} 으로 저장.
         * visualization: {0, 1} 중 선택. t-SNE를 통한 test set의 latent variable을 가시화 하려면 1, 아니면 0으로 설정(현재 label 데이터가 있는 MNIST 데이터에 대해서만 가시화, 사용자 지정 데이터의 label이 있다면 train.py의 test 함수 코드를 수정하여 사용, 즉 MNIST_train = 1 이어야 함).
         * visualization_img_name: 위에서 t-SNE를 가시화 한다면, 그 결과를 저장할 이미지 파일 이름. result/{visualization_img_name} 으로 저장.
         <br><br><br>
