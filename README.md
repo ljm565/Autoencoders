@@ -40,12 +40,12 @@ Autoencoder의 설명은 [Autoencoder (오토인코더)](https://ljm565.github.i
     * 중간에 중단 된 모델 이어서 학습 시
         <br>주의사항: config.json을 수정해야하는 일이 발생 한다면 base_path/config.json이 아닌, base_path/model/{model_name}/{model_name}.json 파일을 수정해야 합니다.
         ```
-        python3 main.py -d gpu -m train -c 1 -n my_autoencoder
+        python3 main.py -d gpu -m train -c 1 -n {model_name}
         ```
     * 학습 된 모델 결과 볼 때
         <br>주의사항: config.json을 수정해야하는 일이 발생 한다면 base_path/config.json이 아닌, base_path/model/{model_name}/{model_name}.json 파일을 수정해야 수정사항이 반영됩니다.
         ```
-        python3 main.py -d cpu -m test -n my_autoencoder
+        python3 main.py -d cpu -m test -n {model_name}
         ```
     <br><br>
 
