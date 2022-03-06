@@ -4,15 +4,15 @@ Autoencoder (오토인코더)는 원래의 데이터를 압축하고 복구하�
 <br><br><br>
 
 ## 모델 종류
-* ### Vanilla Autoencoder
+* ### Vanilla Autoencoder (AE)
     Linear layer를 사용한 vanilla autoencoder가 구현되어 있습니다.
     <br><br>
 
-* ### Convolutional Autoencoder
+* ### Convolutional Autoencoder (CAE)
     Convolutional layer를 사용한 convoluational autoencoder가 구현되어 있습니다. 이 모델은 조금 더 복잡한 데이터에 대해 성능을 높이고싶을 때 vanilla autoencoder 대신에 사용할 수 있습니다.
     <br><br>
 
-* ### Denoising Autoencoder
+* ### Denoising Autoencoder (DAE)
     데이터에 noise를 주어 denoising autoencoder 모델을 학습할 수 있습니다. 이 기법을 위의 vanilla autoencoder, convolutional autencoder에 모두 적용할 수 있습니다. Denoising autoencoder는 데이터의 좀 더 의미있는 잠재 변수(latent variable)를 추출하기 위해 사용 가능합니다.
     <br><br><br>
 
