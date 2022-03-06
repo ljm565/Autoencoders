@@ -109,6 +109,14 @@ Autoencoder의 설명은 [Autoencoder (오토인코더)](https://ljm565.github.i
         <br><br><br>
 
 
+## 결과
+* AE, DAE 결과<br><br>
+![AE results](images/img1.jpg)<br><br>
+* t-SNE를 통한 AE, DAE 잠재 변수 가시화 결과<br><br>
+![AE results](images/img2.jpg)
+<br><br><br>
+
+
 ## License
 © 2022. Jun-Min Lee. All rights reserved.<br>
 ljm56897@gmail.com, ljm565@kaist.ac.kr, ljm565@naver.com
