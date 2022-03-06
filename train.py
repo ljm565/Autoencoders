@@ -216,9 +216,10 @@ class Trainer:
         
         # concatenate all testset for t-sne and results
         with torch.no_grad():
+            total_x, total_output, total_latent_variable, total_y, total_noise_x = [], [], [], [], []
             test_loss = 0
             self.model.eval()
-            for i, (x, y) in enumerate(self.dataloaders['test']):
+            for x, y in self.dataloaders['test']:
                 if self.denoising:
                     noise = torch.zeros_like(x)
                     noise = nn.init.normal_(noise, mean=self.config.noise_mean, std=self.config.noise_std)
@@ -231,16 +232,19 @@ class Trainer:
                 output, latent_variable = self.model(noise_x) if self.denoising else self.model(x)
                 test_loss += self.criterion(output, x).item() * x.size(0)
 
-                if i == 0:
-                    total_x = noise_x.detach().cpu() if self.denoising else x.detach().cpu() 
-                    total_output = output.detach().cpu()
-                    total_latent_variable = latent_variable.detach().cpu()
-                    total_y = y.detach().cpu()
-                else:
-                    total_x = torch.cat((total_x, noise_x.detach().cpu()), dim=0) if self.denoising else torch.cat((total_x, x.detach().cpu()), dim=0)
-                    total_output = torch.cat((total_output, output.detach().cpu()), dim=0)
-                    total_latent_variable = torch.cat((total_latent_variable, latent_variable.detach().cpu()), dim=0)
-                    total_y = torch.cat((total_y, y.detach().cpu()), dim=0)
+                if self.denoising:
+                    total_noise_x.append(noise_x.detach().cpu())
+                total_x.append(x.detach().cpu())
+                total_output.append(output.detach().cpu())
+                total_latent_variable.append(latent_variable.detach().cpu())
+                total_y.append(y.detach().cpu())
+            
+            if self.denoising:
+                total_noise_x = torch.cat(tuple(total_noise_x), dim=0)
+            total_x = torch.cat(tuple(total_x), dim=0)
+            total_output = torch.cat(tuple(total_output), dim=0)
+            total_latent_variable = torch.cat(tuple(total_latent_variable), dim=0)
+            total_y = torch.cat(tuple(total_y), dim=0)
         print('testset loss: {}'.format(test_loss/len(self.dataloaders['test'].dataset)))
 
 
@@ -259,7 +263,10 @@ class Trainer:
         k = 0
         plt.figure(figsize=(7, 3*result_num))
         for id in ids:
-            orig = total_x[id].squeeze(0) if self.color_channel == 1 else total_x[id].permute(1, 2, 0)
+            if self.denoising:
+                orig = total_noise_x[id].squeeze(0) if self.color_channel == 1 else total_noise_x[id].permute(1, 2, 0)
+            else:
+                orig = total_x[id].squeeze(0) if self.color_channel == 1 else total_x[id].permute(1, 2, 0)
             out = total_output[id].squeeze(0) if self.color_channel == 1 else total_output[id].permute(1, 2, 0)
             plt.subplot(result_num, 2, 1+k)
             plt.imshow(orig, cmap='gray')
