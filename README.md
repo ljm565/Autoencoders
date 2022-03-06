@@ -1,6 +1,7 @@
 # Autoencoders
 ## 설명
 Autoencoder (오토인코더)는 원래의 데이터를 압축하고 복구하는 과정에서, 의미있는 잠재 변수를 추출하여 데이터를 압축하거나 차원을 축소하는 manifold learning을 위한 모델입니다. 본 코드에서는 세 종류의 autoencoder 코드를 확인할 수 있으며, MNIST 데이터의 경우 학습 결과로 나온 잠재 변수(latent variable)를 t-SNE를 통해 2차원 데이터로 가시화 합니다.
+Autoencoder의 설명은 [Autoencoder (오토인코더)](https://ljm565.github.io/contents/ManifoldLearning1.html), t-SNE, UMAP에 대한 글은 [t-SNE, UMAP](https://ljm565.github.io/contents/ManifoldLearning2.html)을 참고하시기 바랍니다.
 <br><br><br>
 
 ## 모델 종류
