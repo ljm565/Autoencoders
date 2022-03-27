@@ -34,10 +34,10 @@
     "lr": 0.001,
     "hidden_dim": 256,
     "latent_dim": 32,
-    "dropout": 0.3,
+    "dropout": 0.1,
 
     "result_num": 10,
-    "result_img_name": "result.png",
+    "result_img_name": "result_AE_10epcohs.png",
     "visualization": 1,
-    "visualization_img_name": "visualization.png"
+    "visualization_img_name": "visualization_AE_10epochs.png"
 }
