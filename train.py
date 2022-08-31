@@ -160,6 +160,7 @@ class Trainer:
             print('-'*10)
 
             for phase in ['train', 'val']:
+                print('Phase: {}'.format(phase))
                 if phase == 'train':
                     self.model.train()
                 else:
