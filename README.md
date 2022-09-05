@@ -120,7 +120,5 @@ Autoencoder의 설명은 [Autoencoder (오토인코더)](https://ljm565.github.i
 <br><br><br>
 
 
-## License
-© 2022. Jun-Min Lee. All rights reserved.<br>
-ljm56897@gmail.com, ljm565@kaist.ac.kr, ljm565@naver.com
+
 
