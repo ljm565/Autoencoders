@@ -50,7 +50,7 @@ Autoencoder의 설명은 [Autoencoder (오토인코더)](https://ljm565.github.i
     <br><br>
 
 * ### 모델 학습 조건 설정 (config.json)
-    * **주의사항: 최초 학습 시 config.json이 사용되며, 이미 한 번 학습을 한 모델에 대하여 parameter를 바꾸고싶다면 base_path/model/{model_name}/{model_name}.json 파일을 수정해야 합니다.**
+    **주의사항: 최초 학습 시 config.json이 사용되며, 이미 한 번 학습을 한 모델에 대하여 parameter를 바꾸고싶다면 base_path/model/{model_name}/{model_name}.json 파일을 수정해야 합니다.**
     * model_type: {AE, CAE} 중 선택, autoencoder의 기본 구조 선택(AE: vanilla autoencoder, CAE: convolutional autoencoder).
     * denoising: {0, 1} 중 선택, 1로 할 경우 model_type으로 지정한 모델에 대해 denoising autoencoder 모델 학습.
     * noise_mean, noise_std: denoising이 1일 경우 데이터에 줄 노이즈의 평균, 표준편차 값 설정.
