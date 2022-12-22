@@ -12,6 +12,7 @@ from sklearn.manifold import TSNE
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
+import random
 import os 
 import sys
 
@@ -254,11 +255,8 @@ class Trainer:
 
         # select random index of the data
         ids = set()
-        while 1:
-            if len(ids) == result_num:
-                break
-            id = np.random.randint(1, high=len(total_output))
-            ids.add(id)
+        while len(ids) != result_num:
+            ids.add(random.randrange(len(total_output)))
         ids = list(ids)
 
 
