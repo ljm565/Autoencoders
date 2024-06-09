@@ -57,7 +57,19 @@ result_num: 10
 
 
 ### 2. Training
-Train the autoencoder model using the following command:
+#### 2.1 Arguments
+There are several arguments for running `src/run/train.py`:
+* [-c, --config]: Path to the config file for training.
+* [-m, --mode]: Choose one of [train, resume].
+* [-r, --resume_model_dir]: Path to the model directory when the mode is resume. Provide the path up to `{$project}/{$name}`, and it will automatically select the model from `{$project}/{$name}/weights/` to resume.
+* [-l, --load_model_type]: Choose one of [`loss`, `last`].
+    * `loss` (default): Resume the model with the minimum validation loss.
+    * `last`: Resume the model saved at the last epoch.
+* [-p, --port]: (default: `10001`) NCCL port for DDP training.
+
+
+#### 2.2 Command
+`src/run/train.py` file is used to train the model with the following command.:
 ```bash
 # training from scratch
 python3 train.py --config configs/config.yaml --mode train
