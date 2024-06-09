@@ -64,7 +64,7 @@ result_num: 10
 * [-l, --load_model_type]: [`loss`, `last`] 중 하나를 선택.
     * `loss`(default): Valdiation loss가 최소일 때 모델을 resume.
     * `last`: Last epoch에 저장된 모델을 resume.
-* [-p, --port]: (default: 10001) DDP 학습 시 NCCL port.
+* [-p, --port]: (default: `10001`) DDP 학습 시 NCCL port.
 
 
 #### 2.2 Command
