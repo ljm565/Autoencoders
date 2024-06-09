@@ -6,8 +6,9 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 
 import torch
 
-from utils.training_utils import choose_proper_resume_model
 from trainer import Trainer
+from utils.training_utils import choose_proper_resume_model
+
 
 
 def env_setup():

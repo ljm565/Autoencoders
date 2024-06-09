@@ -5,7 +5,7 @@ import torchvision.datasets as dsets
 import torchvision.transforms as transforms
 from torch.utils.data import DataLoader, distributed, random_split
 
-from utils import RANK, LOGGER, colorstr
+from utils import RANK
 from utils.data_utils import DLoader, seed_worker
 
 PIN_MEMORY = str(os.getenv('PIN_MEMORY', True)).lower() == 'true'  # global pin_memory for dataloaders
