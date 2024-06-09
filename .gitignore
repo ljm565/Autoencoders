@@ -1,8 +1,8 @@
 .vscode/
+.DS_Store
 __pycache__/
 model/
 loss/
 data/
 MNIST/
 result/
-.DS_Store
