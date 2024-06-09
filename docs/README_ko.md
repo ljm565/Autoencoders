@@ -64,8 +64,8 @@ Denoising autoencoder는 데이터의 좀 더 의미있는 잠재 변수(latent 
 2. [Data Preparation](./2_data_preparation_ko.md)
 3. [Training](./3_trainig_ko.md)
 4. ETC
-   * [Evaluation](./docs/4_model_evaluation.md)
-   * [t-SNE Visualization](./docs/5_tsne_visualization.md)
+   * [Evaluation](./docs/4_model_evaluation_ko.md)
+   * [t-SNE Visualization](./docs/5_tsne_visualization_ko.md)
 
 ## 사용 방법
 * ### 학습 방법

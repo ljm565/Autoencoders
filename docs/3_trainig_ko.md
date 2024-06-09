@@ -71,9 +71,9 @@ result_num: 10
 `src/run/train.py` 파일로 다음과 같은 명령어를 통해 autoencoder 모델을 학습합니다.
 ```bash
 # training from scratch
-python3 train.py --config configs/config.yaml --mode train
+python3 src/run/train.py --config configs/config.yaml --mode train
 
 # training from resumed model
-python3 train.py --config config/config.yaml --mode resume --resume_model_dir {$project}/{$name}
+python3 src/run/train.py --config config/config.yaml --mode resume --resume_model_dir {$project}/{$name}
 ```
 모델 학습이 끝나면 `{$project}/{$name}/weights`에 체크포인트가 저장되며, `{$project}/{$name}/args.yaml`에 학습 config가 저장됩니다.

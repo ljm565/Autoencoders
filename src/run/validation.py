@@ -24,9 +24,7 @@ def load_config(config_path):
 
 def main(args):    
     # init config
-    config = load_config(os.path.join(args.resume_model_dir, 'args.yaml')) if args.resume_model_dir else load_config(args.config)
-    if 'training_stage' not in config:
-        config.training_stage = 0
+    config = load_config(os.path.join(args.resume_model_dir, 'args.yaml'))
     
     # init environment
     env_setup()
@@ -51,14 +49,11 @@ def validation(args, config):
 
 if __name__ == '__main__':
     parser = ArgumentParser()
-    parser.add_argument('-r', '--resume_model_dir', type=str, required=False)
-    parser.add_argument('-l', '--load_model_type', type=str, default='metric', required=False, choices=['metric', 'loss', 'last'])
+    parser.add_argument('-r', '--resume_model_dir', type=str, required=True)
+    parser.add_argument('-l', '--load_model_type', type=str, default='loss', required=False, choices=['loss', 'last'])
     parser.add_argument('-d', '--dataset_type', type=str, default='test', required=False, choices=['train', 'validation', 'test'])
-    parser.add_argument('-c', '--config', type=str, required=False)
     args = parser.parse_args()
 
-    if not args.resume_model_dir:
-        assert args.config is not None, 'Please provide resume model directory or config path'
     main(args)
 
     
