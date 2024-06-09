@@ -60,7 +60,7 @@ Denoising autoencoder는 데이터의 좀 더 의미있는 잠재 변수(latent 
 ## Tutorials & Documentations
 오토인코더 모델 학습을 위해서 다음 과정을 따라주시기 바랍니다
 
-1. [Getting Start](./1_getting_start_ko.md)
+1. [Getting Started](./1_getting_start_ko.md)
 2. [Data Preparation](./2_data_preparation_ko.md)
 3. [Training](./3_trainig_ko.md)
 4. ETC
