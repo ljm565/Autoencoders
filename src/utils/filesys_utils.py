@@ -3,8 +3,6 @@ from PIL import Image
 from tqdm import tqdm
 from pathlib import Path
 
-import torch
-
 from utils import LOGGER, colorstr
 
 
