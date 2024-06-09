@@ -25,6 +25,12 @@ Denoising autoencoder는 데이터의 좀 더 의미있는 잠재 변수(latent 
 다만 `src/utils/data_utils.py`에 custom dataloader 코드를 구현해야할 수도 있습니다.
 <br><br><br>
 
+## Quick Start
+```bash
+python3 src/run/train.py --config config/config.yaml --mode train
+```
+<br><br><br>
+
 ## Project Structure
 본 레포지토리는 아래와 같은 구조로 구성됩니다.
 ```
