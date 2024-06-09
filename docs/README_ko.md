@@ -69,7 +69,7 @@ Denoising autoencoder는 데이터의 좀 더 의미있는 잠재 변수(latent 
 <br><br><br>
 
 
-## 결과
+## Training Results
 * AE, DAE 결과<br><br>
 ![AE results](figs/img1.jpg)<br><br>
 * t-SNE를 통한 AE, DAE 잠재 변수 가시화 결과<br><br>
