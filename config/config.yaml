@@ -32,10 +32,6 @@ CUSTOM:
     validation_data_path: null
     test_data_path: null
 
-
-# base_pKame: data1
-# loss_data_name: AE_MNIST_10epochs
-
 # train config
 batch_size: 128
 epochs: 10

@@ -1,76 +1,73 @@
 # Autoencoders
-한국어 버전의 설명은 [여기](./docs/README_ko.md)를 참고하시기 바랍니다.
-
 ## Introduction
-An autoencoder is a model used for manifold learning that extracts meaningful latent variables to compress or reduce the dimensionality of the data through the process of compressing and reconstructing the original data. 
-In this code, you can find implementations of three types of autoencoders.
-For the MNIST dataset, it also provides functionality to visualize the latent variables resulting from the trained model in 2D using t-SNE algorithm.
-For an explanation of autoencoders, refer to [Autoencoder (오토인코더)](https://ljm565.github.io/contents/ManifoldLearning1.html), and for information on t-SNE and UMAP, refer to [t-SNE, UMAP](https://ljm565.github.io/contents/ManifoldLearning2.html).
+Autoencoder (오토인코더)는 원래의 데이터를 압축하고 복구하는 과정에서, 의미있는 잠재 변수를 추출하여 데이터를 압축하거나 차원을 축소하는 manifold learning을 위한 모델입니다.
+본 코드에서는 세 종류의 autoencoder 코드를 확인할 수 있으며, MNIST 데이터의 경우 학습 결과로 나온 잠재 변수(latent variable)를 t-SNE를 통해 2차원 데이터로 가시화하는 기능도 제공합니다.
+Autoencoder의 설명은 [Autoencoder (오토인코더)](https://ljm565.github.io/contents/ManifoldLearning1.html), t-SNE, UMAP에 대한 글은 [t-SNE, UMAP](https://ljm565.github.io/contents/ManifoldLearning2.html)을 참고하시기 바랍니다.
 <br><br><br>
 
 ## Supported Models
 ### Vanilla Autoencoder (AE)
-* A vanilla autoencoder using `nn.Linear` is implemented.
+* `nn.Linear`를 사용한 vanilla autoencoder가 구현되어 있습니다.
 
 ### Convolutional Autoencoder (CAE)
-* A convolutional autoencoder using `nn.Conv2d` and `nn.ConvTranspose2d` is implemented.
-When you want to improve model performance, you can use CAE instead of AE.
+* `nn.Conv2d` 와 `nn.ConvTranspose2d`를 사용한 convoluational autoencoder가 구현되어 있습니다.
+이 모델은 조금 더 복잡한 데이터에 대해 성능을 높이고싶을 때 vanilla autoencoder 대신에 사용할 수 있습니다.
 
 ### Denoising Autoencoder (DAE)
-* For the two models introduced above, you can train a denoising autoencoder by adding noise to the data.
-Denoising autoencoders can be used to extract more meaningful latent variables from the data.
+데이터에 noise를 주어 denoising autoencoder 모델을 학습할 수 있습니다.
+이 기법을 위의 vanilla autoencoder, convolutional autencoder에 모두 적용할 수 있습니다.
+Denoising autoencoder는 데이터의 좀 더 의미있는 잠재 변수(latent variable)를 추출하기 위해 사용 가능합니다.
 <br><br><br>
 
 ## Base Dataset
-* Base dataset for tutorial is [MNIST](http://yann.lecun.com/exdb/mnist/).
-* Custom datasets can also be used by setting the path in the `config/config.yaml`.
-However, implementing a custom dataloader may require additional coding work in `src/utils/data_utils.py`.
+* 튜토리얼로 사용하는 기본 데이터는 [Yann LeCun, Corinna Cortes의 MNIST](http://yann.lecun.com/exdb/mnist/) 데이터입니다.
+* `config/config.yaml`에 학습 데이터의 경로를 설정하여 사용자가 가지고 있는 custom 데이터도 학습 가능합니다.
+다만 `src/utils/data_utils.py`에 custom dataloader 코드를 구현해야할 수도 있습니다.
 <br><br><br>
 
 ## Project Structure
-This repository is structured as follows.
+본 레포지토리는 아래와 같은 구조로 구성됩니다.
 ```
-├── configs                     <- Folder for storing config files
+├── configs                     <- Config 파일들을 저장하는 폴더
 │   └── *.yaml
 │
 └── src      
     ├── models
-    |   ├── autoencoder.py      <- Valilla autoencoder model file
-    |   └── conv_autoencoder.py <- Convolutional autoencoder model file
+    |   ├── autoencoder.py      <- Valilla autoencoder 모델 파일
+    |   └── conv_autoencoder.py <- Convolutional autoencoder 모델 파일
     |
     ├── run                   
-    |   ├── train.py            <- Training execution file
-    |   ├── tsne_test.py        <- Trained model t-SNE visualization execuation file
-    |   └── validation.py       <- Trained model evaulation execution file
+    |   ├── train.py            <- 학습 실행 파일
+    |   ├── tsne_test.py        <- 학습된 모델 t-SNE 가시화 실행 파일
+    |   └── validation.py       <- 학습된 모델 평가 실행 파일
     | 
     ├── tools                   
     |   ├── model_manager.py          
-    |   └── training_logger.py  <- Training logger class file
+    |   └── training_logger.py  <- Training logger class 파일
     |
     ├── trainer                 
-    |   ├── build.py            <- Codes for initializing dataset, dataloader, etc.
-    |   └── trainer.py          <- Class for training, evaluating, and visualizing with t-SNE
+    |   ├── build.py            <- Dataset, dataloader 등을 정의하는 파일
+    |   └── trainer.py          <- 학습, 평가, t-SNE 가시화 수행 class 파일
     |
     └── uitls                   
-        ├── __init__.py         <- Files for initializing the logger, versioning, etc.
-        ├── data_utils.py       <- File defining the custom dataset dataloader
+        ├── __init__.py         <- Logger, 버전 등을 초기화 하는 파일
+        ├── data_utils.py       <- Custom dataloader 파일
         ├── filesys_utils.py       
         └── training_utils.py     
 ```
 <br><br>
 
 ## Tutorials & Documentations
-Please follow the steps below to train the autoencoder.
+오토인코더 모델 학습을 위해서 다음 과정을 따라주시기 바랍니다
 
-1. [Getting Start](./docs/1_getting_start.md)
-2. [Data Preparation](./docs/2_data_preparation.md)
-3. [Training](./docs/3_trainig.md)
+1. [Getting Start](./1_getting_start_ko.md)
+2. [Data Preparation](./2_data_preparation_ko.md)
+3. [Training](./3_trainig_ko.md)
 4. ETC
    * [Evaluation](./docs/4_model_evaluation.md)
    * [t-SNE Visualization](./docs/5_tsne_visualization.md)
 
-
-
+## 사용 방법
 * ### 학습 방법
     학습을 시작하기 위한 argument는 4가지가 있습니다.<br>
     * [-d --device] {cpu, gpu}, **필수**: 학습을 cpu, gpu로 할건지 정하는 인자입니다.
