@@ -31,10 +31,9 @@ However, implementing a custom dataloader may require additional coding work in 
 ```bash
 python3 src/run/train.py --config config/config.yaml --mode train
 ```
-<br><br><br>
+<br><br>
 
-
-## Project Structure
+## Project Tree
 This repository is structured as follows.
 ```
 ├── configs                     <- Folder for storing config files

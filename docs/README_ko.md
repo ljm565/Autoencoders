@@ -29,9 +29,9 @@ Denoising autoencoder는 데이터의 좀 더 의미있는 잠재 변수(latent 
 ```bash
 python3 src/run/train.py --config config/config.yaml --mode train
 ```
-<br><br><br>
+<br><br>
 
-## Project Structure
+## Project Tree
 본 레포지토리는 아래와 같은 구조로 구성됩니다.
 ```
 ├── configs                     <- Config 파일들을 저장하는 폴더
