@@ -1,16 +1,8 @@
 import os
-from PIL import Image
-from tqdm import tqdm
 from pathlib import Path
 
 from utils import LOGGER, colorstr
 
-
-
-def make_img_data(path, trans):
-    files = os.listdir(path)
-    data = [trans(Image.open(path+file)) for file in tqdm(files) if not file.startswith('.')]
-    return data    
 
 
 def make_project_dir(config, is_rank_zero=False):
