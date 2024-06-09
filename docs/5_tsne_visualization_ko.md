@@ -1,8 +1,7 @@
-# Trained Model Evaluation
-여기서는 학습된 autoencoder 모델을 평가하는 가이드를 제공합니다.
+# Trained Model Latent Space Visualization
+여기서는 학습된 autoencoder 모델의 latent space를 가시화하는 가이드를 제공합니다.
 
-
-### 1. Evaluation
+### 1. Visualization
 #### 1.1 Arguments
 `src/run/validation.py`를 실행시키기 위한 몇 가지 argument가 있습니다.
 * [-r, --resume_model_dir]: 평가할 모델의 경로. `{$project}/{$name}`까지의 경로만 입력하면, 자동으로 `{$project}/{$name}/weights/`의 모델을 선택하여 모델을 로드합니다.
