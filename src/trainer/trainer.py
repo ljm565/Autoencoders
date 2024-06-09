@@ -1,126 +1,101 @@
+import os 
+import gc
+import sys
+import copy
+import time
+import math
+import random
+import pickle
+import numpy as np
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+from sklearn.manifold import TSNE
+
 import torch
 import torch.nn as nn
 import torch.optim as optim
 from torch.utils.data import DataLoader, random_split
 import torchvision.datasets as dsets
 import torchvision.transforms as transforms
-import copy
-import time
-import pickle
-import math
-from sklearn.manifold import TSNE
-import numpy as np
-import matplotlib as mpl
-import matplotlib.pyplot as plt
-import random
-import os 
-import sys
 
-from config import Config
-from utils_func import save_checkpoint, make_img_data
-from utils_data import DLoader
-from model_autoencoder import AE, CAE
+from trainer.build import get_model
+from utils import RANK, LOGGER, colorstr, init_seeds
+from utils.data_utils import DLoader
+from utils.filesys_utils import *
+
 
 
 
 class Trainer:
-    def __init__(self, config:Config, device:torch.device, mode:str, continuous:int):
-        self.config = config
-        self.device = device
-        self.mode = mode
-        self.continuous = continuous
-        self.dataloaders = {}
+    def __init__(
+            self, 
+            config,
+            mode: str,
+            device,
+            is_ddp=False,
+            resume_path=None,
+        ):
+        init_seeds(config.seed + 1 + RANK, config.deterministic)
 
-        # if continuous, load previous training info
-        if self.continuous:
-            with open(self.config.loss_data_path, 'rb') as f:
-                self.loss_data = pickle.load(f)
+        # init
+        self.mode = mode
+        self.is_training_mode = self.mode in ['train', 'resume']
+        self.device = torch.device(device)
+        self.is_ddp = is_ddp
+        self.is_rank_zero = True if not self.is_ddp or (self.is_ddp and device == 0) else False
+        self.config = config
+        self.world_size = len(self.config.device) if self.is_ddp else 1
+        self.dataloaders = {}
+        if self.is_training_mode:
+            self.save_dir = make_project_dir(self.config, self.is_rank_zero)
+            self.wdir = self.save_dir / 'weights'
 
         # path, data params
-        self.base_path = self.config.base_path
-        self.model_path = self.config.model_path
-        self.color_channel = self.config.color_channel
-        assert self.color_channel in [1, 3]
-        self.convert2grayscale = True if self.color_channel==3 and self.config.convert2grayscale else False
-        self.color_channel = 1 if self.convert2grayscale else self.color_channel
-        self.model_type = self.config.model_type
-        assert self.model_type in ['AE', 'CAE']
+        self.config.is_rank_zero = self.is_rank_zero
+        self.resume_path = resume_path
         self.denoising = self.config.denoising
 
-        # train params
-        self.batch_size = self.config.batch_size
-        self.epochs = self.config.epochs
-        self.lr = self.config.lr
+        # color channel init
+        self.convert2grayscale = True if self.config.color_channel==3 and self.config.convert2grayscale else False
+        self.color_channel = 1 if self.convert2grayscale else self.config.color_channel
+        self.config.color_channel = self.color_channel
+        
 
+        # sanity check
+        assert self.config.color_channel in [1, 3], colorstr('red', 'image channel must be 1 or 3, check your config..')
+        assert self.config.model_type in ['AE', 'CAE'], colorstr('red', 'model must be AE or CAE, check your config..')
+
+        # save the yaml config
+        if self.is_rank_zero and self.is_training_mode:
+            self.wdir.mkdir(parents=True, exist_ok=True)  # make dir
+            self.config.save_dir = str(self.save_dir)
+            yaml_save(self.save_dir / 'args.yaml', self.config)  # save run args
+
+        # init model, dataset, dataloader, etc.
+        self.modes = ['train', 'validation'] if self.is_training_mode else ['validation']
+        self.model = self._init_model(self.config, self.mode)
+        
+        
+        # train params
+        # self.batch_size = self.config.batch_size
+        # self.epochs = self.config.epochs
+        # self.lr = self.config.lr
 
         # split trainset to trainset and valset and make dataloaders
         if self.config.MNIST_train:
-            # for reproducibility
-            torch.manual_seed(999)
-
             # set to MNIST size
             self.config.width, self.config.height = 28, 28
 
-            self.MNIST_valset_proportion = self.config.MNIST_valset_proportion
-            self.trainset = dsets.MNIST(root=self.base_path, transform=transforms.ToTensor(), train=True, download=True)
-            self.trainset, self.valset = random_split(self.trainset, [len(self.trainset)-int(len(self.trainset)*self.MNIST_valset_proportion), int(len(self.trainset)*self.MNIST_valset_proportion)])
-            self.testset = dsets.MNIST(root=self.base_path, transform=transforms.ToTensor(), train=False, download=True)
+            # init train, validation, test sets
+            self.mnist_path = self.config.MNIST.path
+            self.mnist_valset_proportion = self.config.MNIST.MNIST_valset_proportion
+            self.trainset = dsets.MNIST(root=self.mnist_path, transform=transforms.ToTensor(), train=True, download=True)
+            valset_l = int(len(self.trainset)*self.mnist_valset_proportion)
+            trainset_l = len(self.trainset) - valset_l
+            self.trainset, self.valset = random_split(self.trainset, [trainset_l, valset_l])
+            self.testset = dsets.MNIST(root=self.mnist_path, transform=transforms.ToTensor(), train=False, download=True)
         else:
-            os.makedirs(self.base_path+'data', exist_ok=True)
-
-            if os.path.isdir(self.base_path+'data/'+self.config.data_name):
-                with open(self.base_path+'data/'+self.config.data_name+'/train.pkl', 'rb') as f:
-                    self.trainset = pickle.load(f)
-                with open(self.base_path+'data/'+self.config.data_name+'/val.pkl', 'rb') as f:
-                    self.valset = pickle.load(f)
-                with open(self.base_path+'data/'+self.config.data_name+'/test.pkl', 'rb') as f:
-                    self.testset = pickle.load(f)
-            else:
-                os.makedirs(self.base_path+'data/'+self.config.data_name, exist_ok=True)
-                self.trans = transforms.Compose([transforms.Grayscale(num_output_channels=1),
-                                                transforms.Resize((self.config.height, self.config.width)),
-                                                transforms.ToTensor()]) if self.convert2grayscale else \
-                            transforms.Compose([transforms.Resize((self.config.height, self.config.width)),
-                                                transforms.ToTensor()]) 
-                self.custom_data_proportion = self.config.custom_data_proportion
-                assert math.isclose(sum(self.custom_data_proportion), 1)
-                assert len(self.custom_data_proportion) <= 3
-                
-                if len(self.custom_data_proportion) == 3:
-                    data = make_img_data(self.config.train_data_path, self.trans)
-                    self.train_len, self.val_len = int(len(data)*self.custom_data_proportion[0]), int(len(data)*self.custom_data_proportion[1])
-                    self.test_len = len(data) - self.train_len - self.val_len
-                    self.trainset, self.valset, self.testset = random_split(data, [self.train_len, self.val_len, self.test_len], generator=torch.Generator().manual_seed(999))
-
-                elif len(self.custom_data_proportion) == 2:
-                    data1 = make_img_data(self.config.train_data_path, self.trans)
-                    data2 = make_img_data(self.config.test_data_path, self.trans)
-                    if self.config.two_folders == ['train', 'val']:
-                        self.train_len = int(len(data1)*self.custom_data_proportion[0]) 
-                        self.val_len = len(data1) - self.train_len
-                        self.trainset, self.valset = random_split(data1, [self.train_len, self.val_len], generator=torch.Generator().manual_seed(999))
-                        self.testset = data2
-                    elif self.config.two_folders == ['val', 'test']:
-                        self.trainset = data1
-                        self.val_len = int(len(data2)*self.custom_data_proportion[0]) 
-                        self.test_len = len(data2) - self.val_len
-                        self.valset, self.testset = random_split(data2, [self.val_len, self.test_len], generator=torch.Generator().manual_seed(999))
-                    else:
-                        print("two folders must be ['train', 'val] or ['val', 'test']")
-                        sys.exit()
-
-                elif len(self.custom_data_proportion) == 1:
-                    self.trainset = make_img_data(self.config.train_data_path, self.trans)
-                    self.valset = make_img_data(self.config.val_data_path, self.trans)
-                    self.testset = make_img_data(self.config.test_data_path, self.trans)
-                
-                with open(self.base_path+'data/'+self.config.data_name+'/train.pkl', 'wb') as f:
-                    pickle.dump(self.trainset, f)
-                with open(self.base_path+'data/'+self.config.data_name+'/val.pkl', 'wb') as f:
-                    pickle.dump(self.valset, f)
-                with open(self.base_path+'data/'+self.config.data_name+'/test.pkl', 'wb') as f:
-                    pickle.dump(self.testset, f)
-
+            pass
             self.trainset, self.valset, self.testset = DLoader(self.trainset), DLoader(self.valset), DLoader(self.testset)
         
         self.dataloaders['train'] = DataLoader(self.trainset, batch_size=self.batch_size, shuffle=True)
@@ -129,10 +104,6 @@ class Trainer:
             self.dataloaders['test'] = DataLoader(self.testset, batch_size=self.batch_size, shuffle=False)
 
 
-        if self.model_type == 'AE':
-            self.model = AE(self.config, self.color_channel).to(self.device)
-        elif self.model_type == 'CAE':
-            self.model = CAE(self.config, self.color_channel).to(self.device)
         self.criterion = nn.MSELoss()
         if self.mode == 'train':
             self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
@@ -148,6 +119,33 @@ class Trainer:
             self.model.eval()
             del self.check_point
             torch.cuda.empty_cache()
+
+
+    def _init_model(self, config, mode):
+        def _resume_model(resume_path, device, is_rank_zero):
+            checkpoints = torch.load(resume_path, map_location=device)
+            model.load_state_dict(checkpoints['model'])
+            del checkpoints
+            torch.cuda.empty_cache()
+            gc.collect()
+            if is_rank_zero:
+                LOGGER.info(f'Resumed model: {colorstr(resume_path)}')
+            return model
+
+        # init model and tokenizer
+        resume_success = False
+        do_resume = mode == 'resume' or (mode == 'validation' and self.resume_path)
+        model = get_model(config, self.device)
+
+        # resume model or resume model after applying peft
+        if do_resume and not resume_success:
+            model = _resume_model(self.resume_path, self.device, config.is_rank_zero)
+
+        # init ddp
+        if self.is_ddp:
+            torch.nn.parallel.DistributedDataParallel(model, device_ids=[self.device])
+        
+        return model
 
         
     def train(self):

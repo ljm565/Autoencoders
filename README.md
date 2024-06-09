@@ -114,9 +114,9 @@ Autoencoder의 설명은 [Autoencoder (오토인코더)](https://ljm565.github.i
 
 ## 결과
 * AE, DAE 결과<br><br>
-![AE results](images/img1.jpg)<br><br>
+![AE results](docs/images/img1.jpg)<br><br>
 * t-SNE를 통한 AE, DAE 잠재 변수 가시화 결과<br><br>
-![AE results](images/img2.jpg)
+![AE results](docs/images/img2.jpg)
 <br><br><br>
 
 
