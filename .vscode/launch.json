@@ -18,7 +18,25 @@
             "type": "debugpy",
             "request": "launch",
             "program": "${workspaceFolder}/src/run/train.py",
-            "args": ["--config", "config/config.yaml", "--mode", "train"],
+            "args": ["--config", "config/config.yaml", "--mode", "resume", "-r", "outputs/AE/MNIST"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "validation",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/run/validation.py",
+            "args": ["-r", "outputs/AE/MNIST", "-l", "loss"],
+            "console": "integratedTerminal",
+            "justMyCode": true
+        },
+        {
+            "name": "t-sne visualization",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/src/run/tsne_test.py",
+            "args": ["-r", "outputs/AE/MNIST", "-l", "loss"],
             "console": "integratedTerminal",
             "justMyCode": true
         }

@@ -5,6 +5,7 @@ import platform
 import numpy as np
 import logging.config
 from importlib import metadata
+from tqdm import tqdm as tqdm_original
 
 import torch
 
@@ -217,6 +218,23 @@ def check_version(current: str = '0.0.0',
 
 
 TORCH_2_0 = check_version(torch.__version__, '2.0.0')
+
+
+class TQDM(tqdm_original):
+    """
+    Custom Ultralytics tqdm class with different default arguments.
+
+    Args:
+        *args (list): Positional arguments passed to original tqdm.
+        **kwargs (dict): Keyword arguments, with custom defaults applied.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """Initialize custom Ultralytics tqdm class with different default arguments."""
+        # Set new default values (these can still be overridden when calling TQDM)
+        kwargs['disable'] = not VERBOSE or kwargs.get('disable', False)  # logical 'and' with default value if passed
+        kwargs.setdefault('bar_format', TQDM_BAR_FORMAT)  # override default value if passed
+        super().__init__(*args, **kwargs)
 
 
 def print_mem_consumption(path):

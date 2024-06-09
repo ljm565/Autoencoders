@@ -1,11 +1,8 @@
-import os 
 import gc
 import sys
 import copy
 import time
-import math
 import random
-import pickle
 import numpy as np
 import matplotlib as mpl
 import matplotlib.pyplot as plt
@@ -14,13 +11,12 @@ from sklearn.manifold import TSNE
 import torch
 import torch.nn as nn
 import torch.optim as optim
-from torch.utils.data import DataLoader, random_split
-import torchvision.datasets as dsets
-import torchvision.transforms as transforms
+from torch import distributed as dist
 
-from trainer.build import get_model
-from utils import RANK, LOGGER, colorstr, init_seeds
-from utils.data_utils import DLoader
+from tools import TrainingLogger
+from trainer.build import get_model, get_data_loader
+from utils import TQDM, RANK, LOGGER, colorstr, init_seeds
+from utils.training_utils import init_train_progress_bar
 from utils.filesys_utils import *
 
 
@@ -60,7 +56,6 @@ class Trainer:
         self.color_channel = 1 if self.convert2grayscale else self.config.color_channel
         self.config.color_channel = self.color_channel
         
-
         # sanity check
         assert self.config.color_channel in [1, 3], colorstr('red', 'image channel must be 1 or 3, check your config..')
         assert self.config.model_type in ['AE', 'CAE'], colorstr('red', 'model must be AE or CAE, check your config..')
@@ -72,53 +67,16 @@ class Trainer:
             yaml_save(self.save_dir / 'args.yaml', self.config)  # save run args
 
         # init model, dataset, dataloader, etc.
-        self.modes = ['train', 'validation'] if self.is_training_mode else ['validation']
+        self.modes = ['train', 'validation'] if self.is_training_mode else ['test']
         self.model = self._init_model(self.config, self.mode)
+        self.dataloaders = get_data_loader(self.config, self.modes, self.is_ddp)
+        self.training_logger = TrainingLogger(self.config, self.is_training_mode)
         
-        
-        # train params
-        # self.batch_size = self.config.batch_size
-        # self.epochs = self.config.epochs
-        # self.lr = self.config.lr
-
-        # split trainset to trainset and valset and make dataloaders
-        if self.config.MNIST_train:
-            # set to MNIST size
-            self.config.width, self.config.height = 28, 28
-
-            # init train, validation, test sets
-            self.mnist_path = self.config.MNIST.path
-            self.mnist_valset_proportion = self.config.MNIST.MNIST_valset_proportion
-            self.trainset = dsets.MNIST(root=self.mnist_path, transform=transforms.ToTensor(), train=True, download=True)
-            valset_l = int(len(self.trainset)*self.mnist_valset_proportion)
-            trainset_l = len(self.trainset) - valset_l
-            self.trainset, self.valset = random_split(self.trainset, [trainset_l, valset_l])
-            self.testset = dsets.MNIST(root=self.mnist_path, transform=transforms.ToTensor(), train=False, download=True)
-        else:
-            pass
-            self.trainset, self.valset, self.testset = DLoader(self.trainset), DLoader(self.valset), DLoader(self.testset)
-        
-        self.dataloaders['train'] = DataLoader(self.trainset, batch_size=self.batch_size, shuffle=True)
-        self.dataloaders['val'] = DataLoader(self.valset, batch_size=self.batch_size, shuffle=False)
-        if self.mode == 'test':
-            self.dataloaders['test'] = DataLoader(self.testset, batch_size=self.batch_size, shuffle=False)
-
-
+        # init criterion, optimizer, etc.
+        self.epochs = self.config.epochs
         self.criterion = nn.MSELoss()
-        if self.mode == 'train':
-            self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
-            if self.continuous:
-                self.check_point = torch.load(self.model_path, map_location=self.device)
-                self.model.load_state_dict(self.check_point['model'])
-                self.optimizer.load_state_dict(self.check_point['optimizer'])
-                del self.check_point
-                torch.cuda.empty_cache()
-        elif self.mode == 'test':
-            self.check_point = torch.load(self.model_path, map_location=self.device)
-            self.model.load_state_dict(self.check_point['model'])
-            self.model.eval()
-            del self.check_point
-            torch.cuda.empty_cache()
+        if self.is_training_mode:
+            self.optimizer = optim.Adam(self.model.parameters(), lr=self.config.lr)
 
 
     def _init_model(self, config, mode):
@@ -147,90 +105,168 @@ class Trainer:
         
         return model
 
+
+    def do_train(self):
+        self.train_cur_step = -1
+        self.train_time_start = time.time()
         
-    def train(self):
-        best_val_loss = float('inf') if not self.continuous else self.loss_data['best_val_loss']
-        train_loss_history = [] if not self.continuous else self.loss_data['train_loss_history']
-        val_loss_history = [] if not self.continuous else self.loss_data['val_loss_history']
-        best_epoch_info = 0 if not self.continuous else self.loss_data['best_epoch']
+        if self.is_rank_zero:
+            LOGGER.info(f'\nUsing {self.dataloaders["train"].num_workers * (self.world_size or 1)} dataloader workers\n'
+                        f"Logging results to {colorstr('bold', self.save_dir)}\n"
+                        f'Starting training for {self.epochs} epochs...\n')
+        
+        if self.is_ddp:
+            dist.barrier()
 
         for epoch in range(self.epochs):
             start = time.time()
-            print(epoch+1, '/', self.epochs)
-            print('-'*10)
+            self.epoch = epoch
 
-            for phase in ['train', 'val']:
-                print('Phase: {}'.format(phase))
+            if self.is_rank_zero:
+                LOGGER.info('-'*100)
+
+            for phase in self.modes:
+                if self.is_rank_zero:
+                    LOGGER.info('Phase: {}'.format(phase))
+
                 if phase == 'train':
-                    self.model.train()
+                    self.epoch_train(phase, epoch)
+                    if self.is_ddp:
+                        dist.barrier()
                 else:
-                    self.model.eval()
+                    self.epoch_validate(phase, epoch)
+                    if self.is_ddp:
+                        dist.barrier()
 
-                total_loss = 0
-                for i, (x, _) in enumerate(self.dataloaders[phase]):
+            # clears GPU vRAM at end of epoch, can help with out of memory errors
+            torch.cuda.empty_cache()
+            gc.collect()
+
+            if self.is_rank_zero:
+                LOGGER.info(f"\nepoch {epoch+1} time: {time.time() - start} s\n\n\n")
+
+        if RANK in (-1, 0) and self.is_rank_zero:
+            LOGGER.info(f'\n{epoch + 1} epochs completed in '
+                        f'{(time.time() - self.train_time_start) / 3600:.3f} hours.')
+            
+
+    def epoch_train(
+            self,
+            phase: str,
+            epoch: int
+        ):
+        self.model.train()
+        train_loader = self.dataloaders[phase]
+        nb = len(train_loader)
+
+        if self.is_ddp:
+            train_loader.sampler.set_epoch(epoch)
+
+        # init progress bar
+        if RANK in (-1, 0):
+            pbar = init_train_progress_bar(train_loader, self.is_rank_zero, ['MSE Loss'], nb)
+
+        for i, (x, _) in pbar:
+            self.train_cur_step += 1
+            batch_size = x.size(0)
+            x = x.to(self.device)
+            if self.denoising:
+                noise = torch.zeros_like(x)
+                noise = nn.init.normal_(noise, mean=self.config.noise_mean, std=self.config.noise_std)
+                noise = noise.to(self.device)
+                noise_x = x + noise
+                
+            self.optimizer.zero_grad()
+            output, latent_variable = self.model(noise_x) if self.denoising else self.model(x)
+            loss = self.criterion(output, x)
+            loss.backward()
+            self.optimizer.step()
+
+            if self.is_rank_zero:
+                self.training_logger.update(phase, epoch+1, self.train_cur_step, batch_size, **{'train_loss': loss.item()})
+                loss_log = [loss.item()]
+                msg = tuple([f'{epoch + 1}/{self.epochs}'] + loss_log)
+                pbar.set_description(('%15s' * 1 + '%15.4g' * len(loss_log)) % msg)
+            
+        # upadate logs
+        if self.is_rank_zero:
+            self.training_logger.update_phase_end(phase, printing=True)
+        
+        
+    def epoch_validate(
+            self,
+            phase: str,
+            epoch: int,
+            is_training_now=True
+        ):
+        def _init_headline():
+            header = tuple(['Epoch'] + ['MSE Loss'])
+            LOGGER.info(('\n' + '%15s' * 2) % header)
+
+        def _get_val_pbar(dloader, nb):
+            _init_headline()
+            return TQDM(enumerate(dloader), total=nb)
+        
+        with torch.no_grad():
+            if self.is_rank_zero:
+                val_loader = self.dataloaders[phase]
+                nb = len(val_loader)
+                pbar = _get_val_pbar(val_loader, nb)
+
+                self.model.eval()
+
+                for i, (x, _) in pbar:
+                    batch_size = x.size(0)
+                    x = x.to(self.device)
                     if self.denoising:
                         noise = torch.zeros_like(x)
                         noise = nn.init.normal_(noise, mean=self.config.noise_mean, std=self.config.noise_std)
-                        x = x.to(self.device)
                         noise = noise.to(self.device)
                         noise_x = x + noise
-                    else:
-                        x = x.to(self.device)
+                    
+                    output, latent_variable = self.model(noise_x) if self.denoising else self.model(x)
+                    loss = self.criterion(output, x)
 
-                    self.optimizer.zero_grad()
+                    self.training_logger.update(
+                        phase, 
+                        epoch, 
+                        self.train_cur_step if is_training_now else 0, 
+                        batch_size, 
+                        **{'validation_loss': loss.item()}, 
+                    )
 
-                    with torch.set_grad_enabled(phase=='train'):
-                        output, latent_variable = self.model(noise_x) if self.denoising else self.model(x)
-                        loss = self.criterion(output, x)
-
-                        if phase == 'train':
-                            loss.backward()
-                            self.optimizer.step()
-
-                    total_loss += loss.item()*x.size(0)
-                    if i % 100 == 0:
-                        print('Epoch {}: {}/{} step loss: {}'.format(epoch+1, i, len(self.dataloaders[phase]), loss.item()))
-                epoch_loss = total_loss/len(self.dataloaders[phase].dataset)
-                print('{} loss: {:4f}\n'.format(phase, epoch_loss))
-
-                if phase == 'train':
-                    train_loss_history.append(epoch_loss)
-                if phase == 'val':
-                    val_loss_history.append(epoch_loss)
-                    if epoch_loss < best_val_loss:
-                        best_val_loss = epoch_loss
-                        best_model_wts = copy.deepcopy(self.model.state_dict())
-                        best_epoch = best_epoch_info + epoch + 1
-                        save_checkpoint(self.model_path, self.model, self.optimizer)
-            
-            print("time: {} s\n".format(time.time() - start))
-
-        print('best val loss: {:4f}, best epoch: {:d}\n'.format(best_val_loss, best_epoch))
-        self.model.load_state_dict(best_model_wts)
-        self.loss_data = {'best_epoch': best_epoch, 'best_val_loss': best_val_loss, 'train_loss_history': train_loss_history, 'val_loss_history': val_loss_history}
-        return self.model, self.loss_data
-    
-
-    def test(self, result_num, visualization):
-        if result_num > len(self.dataloaders['test'].dataset):
-            print('The number of results that you want to see are larger than total test set')
-            sys.exit()
+                    loss_log = [loss.item()]
+                    msg = tuple([f'{epoch + 1}/{self.epochs}'] + loss_log)
+                    pbar.set_description(('%15s' * 1 + '%15.4g' * len(loss_log)) % msg)
+                
+                # upadate logs and save model
+                self.training_logger.update_phase_end(phase, printing=True)
+                if is_training_now:
+                    self.training_logger.save_model(self.wdir, self.model)
+                    self.training_logger.save_logs(self.save_dir)
         
+
+    def test(self, phase, result_num):
+        if result_num > len(self.dataloaders[phase].dataset):
+            LOGGER.info(colorstr('red', 'The number of results that you want to see are larger than total test set'))
+            sys.exit()
+
+        # makd directory
+        vis_save_dir = os.path.join(self.config.save_dir, 'vis_outputs') 
+        os.makedirs(vis_save_dir, exist_ok=True)
         
         # concatenate all testset for t-sne and results
         with torch.no_grad():
             total_x, total_output, total_latent_variable, total_y, total_noise_x = [], [], [], [], []
             test_loss = 0
             self.model.eval()
-            for x, y in self.dataloaders['test']:
+            for x, y in self.dataloaders[phase]:
+                x = x.to(self.device)
                 if self.denoising:
                     noise = torch.zeros_like(x)
                     noise = nn.init.normal_(noise, mean=self.config.noise_mean, std=self.config.noise_std)
-                    x = x.to(self.device)
                     noise = noise.to(self.device)
                     noise_x = x + noise
-                else:
-                    x = x.to(self.device)
 
                 output, latent_variable = self.model(noise_x) if self.denoising else self.model(x)
                 test_loss += self.criterion(output, x).item() * x.size(0)
@@ -248,8 +284,8 @@ class Trainer:
             total_output = torch.cat(tuple(total_output), dim=0)
             total_latent_variable = torch.cat(tuple(total_latent_variable), dim=0)
             total_y = torch.cat(tuple(total_y), dim=0)
-        print('testset loss: {}'.format(test_loss/len(self.dataloaders['test'].dataset)))
 
+        LOGGER.info(colorstr('green', f'testset loss: {test_loss/len(self.dataloaders[phase].dataset)}'))
 
         # select random index of the data
         ids = set()
@@ -257,9 +293,8 @@ class Trainer:
             ids.add(random.randrange(len(total_output)))
         ids = list(ids)
 
-
         # save the result img 
-        print('start result drawing')
+        LOGGER.info('start result drawing')
         k = 0
         plt.figure(figsize=(7, 3*result_num))
         for id in ids:
@@ -273,35 +308,34 @@ class Trainer:
             plt.subplot(result_num, 2, 2+k)
             plt.imshow(out, cmap='gray')
             k += 2
-        plt.savefig(self.config.base_path+'result/'+self.config.result_img_name)
 
+        plt.savefig(os.path.join(vis_save_dir, 'autoencoder_result.png'))
 
-        # visualization
-        if visualization and not self.config.MNIST_train:
-            print('Now visualization is possible only for MNIST dataset. You can revise the code for your own dataset and its label..')
+        # t-sne visualization
+        if not self.config.MNIST_train:
+            LOGGER.info(colorstr('red', 'Now visualization is possible only for MNIST dataset. You can revise the code for your own dataset and its label..'))
             sys.exit()
 
-        if visualization:        
-            # latent variable visualization
-            print('start visualizing the latent variables')
-            np.random.seed(42)
-            tsne = TSNE()
-            total_latent_variable = total_latent_variable.view(total_latent_variable.size(0), -1)
-            x_test_2D = tsne.fit_transform(total_latent_variable)
-            x_test_2D = (x_test_2D - x_test_2D.min())/(x_test_2D.max() - x_test_2D.min())
+        # latent variable visualization
+        LOGGER.info('start visualizing the latent space')
+        np.random.seed(42)
+        tsne = TSNE()
+        total_latent_variable = total_latent_variable.view(total_latent_variable.size(0), -1)
+        x_test_2D = tsne.fit_transform(total_latent_variable)
+        x_test_2D = (x_test_2D - x_test_2D.min())/(x_test_2D.max() - x_test_2D.min())
 
-            plt.figure(figsize=(10, 10))
-            plt.scatter(x_test_2D[:, 0], x_test_2D[:, 1], s=10, cmap='tab10', c=total_y.numpy())
-            cmap = plt.cm.tab10
-            image_positions = np.array([[1., 1.]])
-            for index, position in enumerate(x_test_2D):
-                dist = np.sum((position - image_positions) ** 2, axis=1)
-                if np.min(dist) > 0.02: # if far enough from other images
-                    image_positions = np.r_[image_positions, [position]]
-                    imagebox = mpl.offsetbox.AnnotationBbox(
-                        mpl.offsetbox.OffsetImage(torch.squeeze(total_x).cpu().numpy()[index], cmap='binary'),
-                        position, bboxprops={'edgecolor': cmap(total_y.numpy()[index]), 'lw': 2})
-                    plt.gca().add_artist(imagebox)
-            plt.axis('off')
-            plt.savefig(self.config.base_path+'result/'+self.config.visualization_img_name)
+        plt.figure(figsize=(10, 10))
+        plt.scatter(x_test_2D[:, 0], x_test_2D[:, 1], s=10, cmap='tab10', c=total_y.numpy())
+        cmap = plt.cm.tab10
+        image_positions = np.array([[1., 1.]])
+        for index, position in enumerate(x_test_2D):
+            dist = np.sum((position - image_positions) ** 2, axis=1)
+            if np.min(dist) > 0.02: # if far enough from other images
+                image_positions = np.r_[image_positions, [position]]
+                imagebox = mpl.offsetbox.AnnotationBbox(
+                    mpl.offsetbox.OffsetImage(torch.squeeze(total_x).cpu().numpy()[index], cmap='binary'),
+                    position, bboxprops={'edgecolor': cmap(total_y.numpy()[index]), 'lw': 2})
+                plt.gca().add_artist(imagebox)
+        plt.axis('off')
+        plt.savefig(os.path.join(vis_save_dir, 'tsne_result.png'))
 

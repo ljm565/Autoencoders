@@ -1,6 +1,5 @@
 import os
 import sys
-import pickle
 from sconf import Config
 from argparse import ArgumentParser
 sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
@@ -8,7 +7,8 @@ sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
 import torch
 
 from trainer import Trainer
-from utils import LOGGER, colorstr
+from utils import colorstr
+from utils.training_utils import choose_proper_resume_model
 
 
 
@@ -46,7 +46,7 @@ def single_gpu_train(args, config):
         config, 
         args.mode, 
         device, 
-        resume_path=os.path.join(args.resume_model_dir, 'weights/best.pt') if args.mode == 'resume' else None
+        resume_path=choose_proper_resume_model(args.resume_model_dir, args.load_model_type) if args.mode == 'resume' else None
     )
 
     if args.mode in ['train', 'resume']:
@@ -63,7 +63,7 @@ def multi_gpu_train(gpu, ngpus_per_node, config, args):
         args.mode,
         gpu,
         is_ddp=True,
-        resume_path=os.path.join(args.resume_model_dir, 'weights/best.pt') if args.mode == 'resume' else None
+        resume_path=choose_proper_resume_model(args.resume_model_dir, args.load_model_type) if args.mode == 'resume' else None
     )
 
     if args.mode in ['train', 'resume']:
@@ -77,6 +77,7 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--config', type=str, required=False)
     parser.add_argument('-m', '--mode', type=str, required=True, choices=['train', 'resume'])
     parser.add_argument('-r', '--resume_model_dir', type=str, required=False)
+    parser.add_argument('-l', '--load_model_type', type=str, default='loss', required=False, choices=['loss', 'last'])
     parser.add_argument('-p', '--port', type=str, default='10001', required=False)
     args = parser.parse_args()
 

@@ -9,12 +9,6 @@ from utils import LOGGER, colorstr
 
 
 
-def save_checkpoint(file, model, optimizer):
-    state = {'model': model.state_dict(), 'optimizer': optimizer.state_dict()}
-    torch.save(state, file)
-    print('model pt file is being saved\n')
-
-
 def make_img_data(path, trans):
     files = os.listdir(path)
     data = [trans(Image.open(path+file)) for file in tqdm(files) if not file.startswith('.')]
@@ -66,4 +60,4 @@ def yaml_save(file='data.yaml', data=None, header=''):
     print(data.dumps())
     with open(save_path, "w") as f:
         f.write(data.dumps(modified_color=None, quote_str=True))
-        print(f"Config is saved at {save_path}")
+        LOGGER.info(f"Config is saved at {save_path}")

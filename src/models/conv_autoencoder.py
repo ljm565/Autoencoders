@@ -3,11 +3,11 @@ import torch.nn as nn
 
 
 class CAE(nn.Module):
-    def __init__(self, config, color_channel: int):
+    def __init__(self, config):
         super(CAE, self).__init__()
         self.height = config.height
         self.width = config.width
-        self.color_channel = color_channel
+        self.color_channel = config.color_channel
 
         self.encoder = nn.Sequential(
             nn.Conv2d(in_channels=self.color_channel, out_channels=32, kernel_size=3, stride=1, padding=1),
