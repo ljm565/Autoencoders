@@ -14,7 +14,7 @@ from torch import distributed as dist
 
 from tools import TrainingLogger
 from trainer.build import get_model, get_data_loader
-from utils import TQDM, RANK, LOGGER, colorstr, init_seeds
+from utils import RANK, LOGGER, colorstr, init_seeds
 from utils.training_utils import init_progress_bar
 from utils.filesys_utils import *
 
