@@ -12,7 +12,7 @@ There are several arguments for running `src/run/tnse_test.py`:
 
 
 #### 1.2 Command
-`src/run/tsne_test.py` file is used to evaluate the model with the following command:
+`src/run/tsne_test.py` file is used to visualize latent spaces of the trained model.
 ```bash
 python3 src/run/tsne_test.py --resume_model_dir {$project}/{$name}
 ```

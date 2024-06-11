@@ -12,7 +12,7 @@
 
 
 #### 1.2 Command
-`src/run/tsne_test.py` 파일로 다음과 같은 명령어를 통해 학습된 모델이 생성한 이미지를 가시화합니다.
+`src/run/tsne_test.py` 파일로 다음과 같은 명령어를 통해 학습된 모델의 latent space를 가시화합니다.
 ```bash
 python3 src/run/tsne_test.py --resume_model_dir {$project}/{$name}
 ```
