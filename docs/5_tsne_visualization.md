@@ -1,5 +1,5 @@
 # Trained Model Latent Space Visualization
-Here, we provide guides for visualizing the trained autoencoder model's latent space
+Here, we provide guides for visualizing the trained autoencoder model's latent space.
 
 ### 1. Visualization
 #### 1.1 Arguments
@@ -14,5 +14,5 @@ There are several arguments for running `src/run/tnse_test.py`:
 #### 1.2 Command
 `src/run/tsne_test.py` file is used to evaluate the model with the following command:
 ```bash
-python3 src/run/tsne_test.py --config --resume_model_dir {$project}/{$name}
+python3 src/run/tsne_test.py --resume_model_dir {$project}/{$name}
 ```
