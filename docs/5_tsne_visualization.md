@@ -4,7 +4,7 @@ Here, we provide guides for visualizing the trained autoencoder model's latent s
 ### 1. Visualization
 #### 1.1 Arguments
 There are several arguments for running `src/run/tnse_test.py`:
-* [-r, --resume_model_dir]: Directory to the model to be evaluated. Provide the path up to `{$project}/{$name}`, and it will automatically select the model from `{$project}/{$name}/weights/` to evaluate.
+* [-r, --resume_model_dir]: Directory to the model to be evaluated. Provide the path up to `{$project}/{$name}`, and it will automatically select the model from `{$project}/{$name}/weights/` to visualize.
 * [-l, --load_model_type]: Choose one of [`loss`, `last`].
     * `loss` (default): Resume the model with the minimum validation loss.
     * `last`: Resume the model saved at the last epoch.
