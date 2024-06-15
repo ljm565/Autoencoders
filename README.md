@@ -27,6 +27,10 @@ Denoising autoencoders can be used to extract more meaningful latent variables f
 However, implementing a custom dataloader may require additional coding work in `src/utils/data_utils.py`.
 <br><br><br>
 
+## Supported Devices
+* CPU, GPU, multi-GPU (DDP), MPS (for Mac and torch>=1.12.0)
+<br><br><br>
+
 ## Quick Start
 ```bash
 python3 src/run/train.py --config config/config.yaml --mode train
