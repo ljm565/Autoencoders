@@ -38,7 +38,7 @@ def validation(args, config):
         device = torch.device('mps:0')
     else:
         device = torch.device('cpu') if config.device == 'cpu' else torch.device(f'cuda:{config.device[0]}')
-        
+
     trainer = Trainer(
         config, 
         'validation', 
@@ -46,7 +46,7 @@ def validation(args, config):
         resume_path=choose_proper_resume_model(args.resume_model_dir, args.load_model_type) if args.resume_model_dir else None
     )
 
-    trainer.test(args.dataset_type, config.result_num)
+    trainer.tsne_test(args.dataset_type, config.result_num)
 
 
 
