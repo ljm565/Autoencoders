@@ -15,7 +15,7 @@ device: cpu                 # You can DDP training with multiple gpus. e.g. gpu:
 
 # project config
 project: outputs/AE         # Project directory
-name: MNIST                 # Trained model-related data are saved at {$project}/{$name} folde
+name: MNIST                 # Trained model-related data are saved at ${project}/${name} folde
 
 # model config
 model_type: AE              # [AE, CAE], you can choose one.
@@ -61,7 +61,7 @@ result_num: 10
 There are several arguments for running `src/run/train.py`:
 * [`-c`, `--config`]: Path to the config file for training.
 * [`-m`, `--mode`]: Choose one of [`train`, `resume`].
-* [`-r`, `--resume_model_dir`]: Path to the model directory when the mode is resume. Provide the path up to `{$project}/{$name}`, and it will automatically select the model from `{$project}/{$name}/weights/` to resume.
+* [`-r`, `--resume_model_dir`]: Path to the model directory when the mode is resume. Provide the path up to `${project}/${name}`, and it will automatically select the model from `${project}/${name}/weights/` to resume.
 * [`-l`, `--load_model_type`]: Choose one of [`loss`, `last`].
     * `loss` (default): Resume the model with the minimum validation loss.
     * `last`: Resume the model saved at the last epoch.
@@ -75,7 +75,7 @@ There are several arguments for running `src/run/train.py`:
 python3 src/run/train.py --config configs/config.yaml --mode train
 
 # training from resumed model
-python3 src/run/train.py --config config/config.yaml --mode resume --resume_model_dir {$project}/{$name}
+python3 src/run/train.py --config config/config.yaml --mode resume --resume_model_dir ${project}/${name}
 ```
 
-When the model training is complete, the checkpoint is saved in `{$project}/{$name}/weights` and the training config is saved at `{$project}/{$name}/args.yaml`.
+When the model training is complete, the checkpoint is saved in `${project}/${name}/weights` and the training config is saved at `${project}/${name}/args.yaml`.
