@@ -50,9 +50,6 @@ dropout: 0.1
 
 # logging config
 common: ['train_loss', 'validation_loss']
-
-# t-sne visualiztion config
-result_num: 10
 ```
 
 
